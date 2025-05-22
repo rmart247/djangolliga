@@ -1,12 +1,11 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-
 class Lliga(models.Model):
     nom = models.CharField(max_length=100)
     temporada = models.CharField(max_length=20)
-    data_inici = models.DateField()
-    data_fi = models.DateField()
+    data_inici = models.DateField(null=True)
+    data_fi = models.DateField(null=True)
     
     def __str__(self):
         return f"{self.nom} {self.temporada}"
@@ -14,7 +13,7 @@ class Lliga(models.Model):
 class Equip(models.Model):
     nom = models.CharField(max_length=100)
     ciutat = models.CharField(max_length=100)
-    fundacio = models.IntegerField()
+    fundacio = models.IntegerField(null=True)
     escut = models.ImageField(upload_to='escuts/', null=True, blank=True)
     lliga = models.ManyToManyField(Lliga, related_name='equips')
     
@@ -51,6 +50,18 @@ class Partit(models.Model):
     
     def __str__(self):
         return f"{self.local} {self.visitant} ({self.data})"
+
+    def gols_local(self):
+        gols = self.events.filter(
+                        tipus="GOL",
+                        equip=self.local).count()
+        return gols
+
+    def gols_visitant(self):
+        gols = self.events.filter(
+                        tipus="GOL",
+                        equip=self.visitant).count()
+        return gols
 
 class Event(models.Model):
     TIPUS_EVENT = [
