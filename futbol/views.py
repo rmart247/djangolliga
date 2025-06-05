@@ -1,14 +1,41 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django import forms
+from django.contrib.auth.decorators import login_required
 
 from .models import *
 
-def classificacio_menu(request):
-	#fem directament el queryset
-	queryset= Lliga.objects.all()
-	return render(request, "classificacio_menu.html",
-		{"lligues":queryset})
+@login_required
+def prova_auth(request):
+    return HttpResponse("usuari: "+str(request.user))
 
+class MenuForm(forms.Form):
+    lliga = forms.ModelChoiceField(queryset=Lliga.objects.all())
+    #nom = forms.CharField()
+    #cognoms = forms.CharField()
+    #edat = forms.IntegerField()
+
+def classificacio_menu(request):
+    #fem directament el queryset
+    queryset= Lliga.objects.all()
+    #form = MenuForm()
+    #return render(request, "classificacio_menu.html",
+    #   {"lligues":queryset,"form":form})
+
+#   si hi ha dades les processem
+    if request.method == "POST":
+        form = MenuForm(request.POST)
+        if form.is_valid():
+            lliga = form.cleaned_data.get("lliga")
+            # cridem a /classificacio/<lliga_id>
+            return redirect('classificacio',lliga.id)
+
+    #renderitzem formulari
+    form = MenuForm()
+    return render(request, "classificacio_menu.html",{
+                    "lligues":queryset, # per renderitzar menu de links
+                    "form":form #per renderitzar form desplegable
+            })
 def classificacio(request, lliga_id):
     lliga = Lliga.objects.get(id=lliga_id)
     equips = lliga.equips.all()
@@ -38,3 +65,25 @@ def classificacio(request, lliga_id):
                     "classificacio":classi,
                 })
 
+
+class EquipForm(forms.ModelForm):
+    class Meta:
+        model = Equip
+        exclude = ()
+
+def crea_equip(request):
+    form = EquipForm()
+
+    #   si hi ha dades les processem
+    if request.method == "POST":
+        form = EquipForm(request.POST)
+        if form.is_valid():
+            equips = Equip.objects.filter(nom=form.cleaned_data.get("nom"))
+            if equips.count() > 0:
+                return HttpResponse("ERROR: el nom de l'equip ja existeix")
+            form.save()
+    
+    #creem el form si no hi ha dades
+    return render(request,"crea_equip.html",{
+        "form":form,
+        })

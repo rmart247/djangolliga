@@ -8,3 +8,12 @@ Tria la lliga que vols visualitzar:
     
 {% endfor %}
 </ul>
+
+Format form:
+<form method="post">
+	{% csrf_token %}
+	{{ form.as_p }}
+ 
+	<input type="submit" name="submit">
+
+</form>
